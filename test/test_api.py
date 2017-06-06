@@ -16,8 +16,27 @@ class BaseApiTester(unittest.TestCase):
         self.api_address = "https://192.168.122.77:8080/cgi-bin/ezs3"
         self.session = requests.Session()
         response = self.session.get(self.api_address + "/login?user_id=admin&password=password", verify=False)
-        #self.assertTrue(self.is_query_success(response))
+
+        rc = self.to_return_code(response.content)
+        if rc != 0:
+            raise AssertionError("login failed, return code= %s" % rc)
+
         self.cookies = response.cookies
+
+    def to_return_code(self, content):
+        root = None
+        # check content is xml
+        try:
+            root = et.fromstring(content)
+        except et.ParseError:
+            raise AssertionError("response content should be xml, content= %s" % content)
+
+        # check content contains return code
+        rc_element = root.find("API_return/return_code")
+        if rc_element is None:
+            raise AssertionError("return code is not exists, content= %s" % content)
+
+        return int(rc_element.text)
 
     def generate_random_string(self, length):
         return ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(length+1))
@@ -50,8 +69,7 @@ class SharedFolderTester(BaseApiTester):
 
         response = self.session.post(url, cookies=self.cookies, data=data)
         return response
-
-    
+        
     @parameterized.expand([
         ["chars",            "abc",           0],
         ["digits",           "123",           0],
@@ -71,11 +89,9 @@ class SharedFolderTester(BaseApiTester):
         response = self.create_shared_folder(name, nfs=True)
         self.delete_shared_folder(name.strip())
 
-        root = et.fromstring(response.content)
-        rc_elm = root.find("API_return/return_code")
-        assert rc_elm is not None
-        self.assertEquals(int(rc_elm.text), return_code, 
-            "create shared folder with name %s return code %s, not %s" % (name, rc_elm.text, return_code))
+        rc = self.to_return_code(response.content)
+        self.assertEquals(rc, return_code, 
+            "create shared folder with name %s get wrong return code %s, not %s" % (name, rc, return_code))
     
     @parameterized.expand([
         ["254", 254,   0],
@@ -86,11 +102,9 @@ class SharedFolderTester(BaseApiTester):
         response = self.create_shared_folder(name, nfs=True)
         self.delete_shared_folder(name)
 
-        root = et.fromstring(response.content)
-        rc_elm = root.find("API_return/return_code")
-        assert rc_elm is not None
-        self.assertEquals(int(rc_elm.text), return_code, 
-            "create shared folder with name length %s return code %s, not %s" % (name_length, rc_elm.text, return_code))
+        rc = self.to_return_code(response.content)
+        self.assertEquals(rc, return_code, 
+            "create shared folder with name length %s get wrong return code %s, not %s" % (name_length, rc, return_code))
 
     @parameterized.expand([
         ["same name",      "abcd", "abcd", 33],
@@ -102,11 +116,9 @@ class SharedFolderTester(BaseApiTester):
         self.delete_shared_folder(first)
         self.delete_shared_folder(second)
 
-        root = et.fromstring(response.content)
-        rc_elm = root.find("API_return/return_code")
-        assert rc_elm is not None
-        self.assertEquals(int(rc_elm.text), return_code, 
-            "after create %s, create folder %s return code %s, not %s" % (first, second, rc_elm.text, return_code))
+        rc = self.to_return_code(response.content)
+        self.assertEquals(rc, return_code, 
+            "after create %s, create folder %s get wrong return code %s, not %s" % (first, second, rc, return_code))
     
     @parameterized.expand([
         ["target exists",     "abcd", "abcd",  0],
@@ -115,14 +127,11 @@ class SharedFolderTester(BaseApiTester):
     def test_delete(self, param_name, created, deleted, return_code):
         if created is not None:
             self.create_shared_folder(created, nfs=True)
-
         response = self.delete_shared_folder(deleted)
 
-        root = et.fromstring(response.content)
-        rc_elm = root.find("API_return/return_code")
-        assert rc_elm is not None
-        self.assertEquals(int(rc_elm.text), return_code, 
-            "after create %s, delete folder %s return code %s, not %s" % (created, deleted, rc_elm.text, return_code))
+        rc = self.to_return_code(response.content)
+        self.assertEquals(rc, return_code, 
+            "after create %s, delete folder %s get wrong return code %s, not %s" % (created, deleted, rc, return_code))
     
     @parameterized.expand([
         ["true to true",   True,  True,  0],
@@ -136,20 +145,18 @@ class SharedFolderTester(BaseApiTester):
         response = self.edit_shared_folder(name, nfs=True, read_only=on_edited)
         self.delete_shared_folder(name)
 
-        root = et.fromstring(response.content)
-        rc_elm = root.find("API_return/return_code")
-        self.assertEquals(int(rc_elm.text), return_code, 
-            "create with read_only=%s and edit to read_only=%s return code %s, not %s" % (on_created, on_edited, rc_elm.text, return_code))
+        rc = self.to_return_code(response.content)
+        self.assertEquals(rc, return_code, 
+            "create with read_only=%s and edit to read_only=%s get wrong return code %s, not %s" % (on_created, on_edited, rc, return_code))
 
     def test_edit_read_only_settings_with_non_exists(self):
         name = self.generate_random_string(10)
         return_code = 34
         response = self.edit_shared_folder(name, nfs=True, read_only=True)
 
-        root = et.fromstring(response.content)
-        rc_elm = root.find("API_return/return_code")
-        self.assertEquals(int(rc_elm.text), return_code, 
-            "edit read_only to non exists shared folder return code %s, not %s" % (rc_elm.text, return_code))
+        rc = self.to_return_code(response.content)
+        self.assertEquals(rc, return_code, 
+            "edit read_only to non exists shared folder get wrong return code %s, not %s" % (rc, return_code))
 
     @parameterized.expand([
         ["true to true",   True,  True,  0],
@@ -163,20 +170,18 @@ class SharedFolderTester(BaseApiTester):
         response = self.edit_shared_folder(name, nfs=True, read_only=on_edited)
         self.delete_shared_folder(name)
 
-        root = et.fromstring(response.content)
-        rc_elm = root.find("API_return/return_code")
-        self.assertEquals(int(rc_elm.text), return_code, 
-            "create with read_only=%s and edit to read_only=%s return code %s, not %s" % (on_created, on_edited, rc_elm.text, return_code))
+        rc = self.to_return_code(response.content)
+        self.assertEquals(rc, return_code, 
+            "create with read_only=%s and edit to read_only=%s get wrong return code %s, not %s" % (on_created, on_edited, rc, return_code))
 
     def test_edit_read_only_settings_with_non_exists(self):
         name = self.generate_random_string(10)
         return_code = 34
         response = self.edit_shared_folder(name, nfs=True, read_only=True)
 
-        root = et.fromstring(response.content)
-        rc_elm = root.find("API_return/return_code")
-        self.assertEquals(int(rc_elm.text), return_code, 
-            "edit read_only to non exists shared folder return code %s, not %s" % (rc_elm.text, return_code))
+        rc = self.to_return_code(response.content)
+        self.assertEquals(rc, return_code, 
+            "edit read_only to non exists shared folder get wrong return code %s, not %s" % (rc, return_code))
 
     # nfs_allowed_hosts format is <host>:<is_root_squash>:<uid>:<gid> (no document)
     @parameterized.expand([
@@ -191,10 +196,9 @@ class SharedFolderTester(BaseApiTester):
         response = self.edit_shared_folder(name, nfs=True, nfs_allowed_hosts=nfs_allowed_hosts)
         self.delete_shared_folder(name)
 
-        root = et.fromstring(response.content)
-        rc_elm = root.find("API_return/return_code")
-        self.assertEquals(int(rc_elm.text), return_code, 
-            "add allowed host %s return code %s, not %s" % (nfs_allowed_hosts, rc_elm.text, return_code))
+        rc = self.to_return_code(response.content)
+        self.assertEquals(rc, return_code, 
+            "add allowed host %s return code %s, not %s" % (nfs_allowed_hosts, rc, return_code))
 
 if __name__ == '__main__':
     unittest.main()
