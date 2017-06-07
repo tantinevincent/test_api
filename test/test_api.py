@@ -81,6 +81,11 @@ class SharedFolderTester(BaseApiTester):
 
         response = self.session.post(url, cookies=self.cookies, data=data)
         return response
+
+    def get_realtime_statistic(self):
+        url = "%s/json/realtime_statistic?categories=protocol_accumulate&gateway_group=" % self.api_address
+        response = self.session.get(url, cookies=self.cookies)
+        return response
         
     @parameterized.expand([
         ["chars",            "abc",           0],
@@ -210,7 +215,33 @@ class SharedFolderTester(BaseApiTester):
 
         rc = self.to_return_code(response.content)
         self.assertEquals(rc, return_code, 
-            "add allowed host %s return code %s, not %s" % (nfs_allowed_hosts, rc, return_code))
+            "add allowed host %s get wrong return code %s, not %s" % (nfs_allowed_hosts, rc, return_code))
+
+    def test_realtime_statistic_format(self):
+        response = self.get_realtime_statistic()
+        import json
+        result = json.loads(response.content)
+
+        # check return code
+        if "return_code" not in result:
+            raise AssertionError("return code is not exists, content= %s" % response.content)
+
+        self.assertEquals(result["return_code"],  0)
+
+        # check format
+        if "response" not in result:
+            raise AssertionError("response is not exists, content= %s" % response.content)
+
+        if "protocol_accumulate" not in result["response"]:
+            raise AssertionError("response/protocol_accumulate is not exists, content= %s" % response.content)
+
+        if "Default" not in result["response"]["protocol_accumulate"]:
+            raise AssertionError("response/protocol_accumulate/Default is not exists, content= %s" % response.content)
+
+        for key in ["nfs_write_ops", "nfs_write_time", "nfs_read_time", "nfs_read_ops", "nfs_read_bytes", "nfs_write_bytes"]:
+            if key not in result["response"]["protocol_accumulate"]["Default"]:
+                msg = "response/protocol_accumulate/%s is not exists, content= %s" % (key, response.content)
+                raise AssertionError(msg)
 
 if __name__ == '__main__':
     unittest.main()
