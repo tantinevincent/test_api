@@ -5,6 +5,7 @@ import xml.etree.ElementTree as et
 from parameterized import parameterized
 import random
 import string
+import ConfigParser
 
 urllib3.disable_warnings() # disable insecure warnings
 
@@ -13,9 +14,20 @@ class BaseApiTester(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super(BaseApiTester, self).__init__(*args, **kwargs)
 
-        self.api_address = "https://192.168.122.77:8080/cgi-bin/ezs3"
+        # config loading
+        config = ConfigParser.ConfigParser()
+        config.read('./config.ini')
+        self.api_address = config.get('server', 'api_address')
+        user_id = config.get('server', 'user_id')
+        password = config.get('server', 'password')
+
+        login_url = "%s/login?user_id=%s&password=%s" % (self.api_address, user_id, password)
+
         self.session = requests.Session()
-        response = self.session.get(self.api_address + "/login?user_id=admin&password=password", verify=False)
+        try:
+            response = self.session.get(login_url, verify=False)
+        except requests.exceptions.RequestException:
+            raise AssertionError("connection failed, please check api_address in config.ini")
 
         rc = self.to_return_code(response.content)
         if rc != 0:
