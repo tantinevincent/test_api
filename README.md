@@ -5,12 +5,12 @@
 1. install python 2.7 and pip
 2. execute `pip install -r requirements.txt` to install python packages
 3. edit api_address, user_id, password in config.ini for testing
-4. execute `pytest --verbose test/`
+4. execute `./run_all_test.sh`
 
 ## Screenshot
 
 ```
-(env)vincent@vincent-home:~/test_api$ pytest --verbose test/
+(env)vincent@vincent-home:~/test_api$ ./run_all_test.sh
 ============================= test session starts ==============================
 platform linux2 -- Python 2.7.6, pytest-3.1.2, py-1.4.34, pluggy-0.4.0 -- /home/vincent/test_api/env/bin/python
 cachedir: .cache
