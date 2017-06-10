@@ -1,4 +1,3 @@
-#import unittest
 import requests
 import urllib3
 import xml.etree.ElementTree as et

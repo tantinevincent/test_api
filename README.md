@@ -5,56 +5,79 @@
 1. install python 2.7 and pip
 2. execute `pip install -r requirements.txt` to install python packages
 3. edit api_address, user_id, password in config.ini for testing
-4. execute `./run_all_test.sh`
+4. execute `pytest --verbose test/`
 
-## Sreenshot
-```
-(env)vincent@vincent-home:~/test_api$ ./run_all_test.sh 
-test_add_allowed_hosts_0_ip (test.test_api.SharedFolderTester) ... ok
-test_add_allowed_hosts_1_cidr (test.test_api.SharedFolderTester) ... ok
-test_add_allowed_hosts_2_hostname (test.test_api.SharedFolderTester) ... ok
-test_add_allowed_hosts_3_wrong_ip (test.test_api.SharedFolderTester) ... ok
-test_create_0_chars (test.test_api.SharedFolderTester) ... ok
-test_create_10_vertical_bar (test.test_api.SharedFolderTester) ... ok
-test_create_11_question_mark (test.test_api.SharedFolderTester) ... ok
-test_create_12_asterisk (test.test_api.SharedFolderTester) ... ok
-test_create_1_digits (test.test_api.SharedFolderTester) ... ok
-test_create_2_digits_and_chars (test.test_api.SharedFolderTester) ... ok
-test_create_3_with_spaces (test.test_api.SharedFolderTester) ... ok
-test_create_4_less_sign (test.test_api.SharedFolderTester) ... ok
-test_create_5_greater_sign (test.test_api.SharedFolderTester) ... ok
-test_create_6_colon (test.test_api.SharedFolderTester) ... ok
-test_create_7_doube_quotation (test.test_api.SharedFolderTester) ... ok
-test_create_8_slash (test.test_api.SharedFolderTester) ... ok
-test_create_9_bakcslash (test.test_api.SharedFolderTester) ... ok
-test_create_twice_0_same_name (test.test_api.SharedFolderTester) ... ok
-test_create_twice_1_different_name (test.test_api.SharedFolderTester) ... ok
-test_create_with_name_length_0_254 (test.test_api.SharedFolderTester) ... ok
-test_create_with_name_length_1_255 (test.test_api.SharedFolderTester) ... ok
-test_delete_0_target_exists (test.test_api.SharedFolderTester) ... ok
-test_delete_1_target_non_exitst (test.test_api.SharedFolderTester) ... ok
-test_edit_read_only_setting_0_true_to_true (test.test_api.SharedFolderTester) ... ok
-test_edit_read_only_setting_1_true_to_false (test.test_api.SharedFolderTester) ... ok
-test_edit_read_only_setting_2_false_to_false (test.test_api.SharedFolderTester) ... ok
-test_edit_read_only_setting_3_false_to_true (test.test_api.SharedFolderTester) ... ok
-test_edit_read_only_settings_with_non_exists (test.test_api.SharedFolderTester) ... ok
-
-----------------------------------------------------------------------
-Ran 28 tests in 78.810s
-
-OK
-```
-
-## Run single testing
-
-- just execute `python -m unittest test.test_api.SharedFolderTester.<test_case_name>`
-- for example:
+## Screenshot
 
 ```
-(env)vincent@vincent-home:~/test_api$ python -m unittest test.test_api.SharedFolderTester.test_delete_0_target_exists
-.
-----------------------------------------------------------------------
-Ran 1 test in 2.893s
+(env)vincent@vincent-home:~/test_api$ pytest --verbose test/
+============================= test session starts ==============================
+platform linux2 -- Python 2.7.6, pytest-3.1.2, py-1.4.34, pluggy-0.4.0 -- /home/vincent/test_api/env/bin/python
+cachedir: .cache
+rootdir: /home/vincent/test_api, inifile:
+collected 29 items 
 
-OK
+test/test_api.py::test_create[chars-abc-0] PASSED
+test/test_api.py::test_create[digits-123-0] PASSED
+test/test_api.py::test_create[digits and chars-abc_1234-0] PASSED
+test/test_api.py::test_create[with spaces-  cde_789-0] PASSED
+test/test_api.py::test_create[less sign-<-606] PASSED
+test/test_api.py::test_create[greater sign->-606] PASSED
+test/test_api.py::test_create[colon-:-606] PASSED
+test/test_api.py::test_create[doube quotation-"-606] PASSED
+test/test_api.py::test_create[slash-/-606] PASSED
+test/test_api.py::test_create[bakcslash-\-606] PASSED
+test/test_api.py::test_create[vertical bar-|-606] PASSED
+test/test_api.py::test_create[question mark-?-606] PASSED
+test/test_api.py::test_create[asterisk-*-606] PASSED
+test/test_api.py::test_create_with_name_length[254-254-0] PASSED
+test/test_api.py::test_create_with_name_length[255-255-606] PASSED
+test/test_api.py::test_create_twice[same name-abcd-abcd-33] PASSED
+test/test_api.py::test_create_twice[different name-abcd-1234-0] PASSED
+test/test_api.py::test_delete[target exists-abcd-abcd-0] PASSED
+test/test_api.py::test_delete[target non exitst-None-1234-34] PASSED
+test/test_api.py::test_edit_read_only_setting[true to true-True-True-0] PASSED
+test/test_api.py::test_edit_read_only_setting[true to false-True-False-0] PASSED
+test/test_api.py::test_edit_read_only_setting[false to false-False-False-0] PASSED
+test/test_api.py::test_edit_read_only_setting[false to true-False-True-0] PASSED
+test/test_api.py::test_edit_read_only_settings_with_non_exists PASSED
+test/test_api.py::test_add_allowed_hosts[ip-192.168.122.66:false::-0] PASSED
+test/test_api.py::test_add_allowed_hosts[cidr-192.168.122.0/24:false::-0] PASSED
+test/test_api.py::test_add_allowed_hosts[hostname-test-host:false::-0] PASSED
+test/test_api.py::test_add_allowed_hosts[wrong ip-256.256.256.256:false::-0] PASSED
+test/test_api.py::test_realtime_statistic_format PASSED
+
+============================ 29 passed in 89.29 seconds =============================
+```
+
+## Run single testcase
+
+```
+(env)vincent@vincent-home:~/test_api$ pytest --verbose test/test_api.py::test_create[chars-abc-0]
+================================ test session starts ================================
+platform linux2 -- Python 2.7.6, pytest-3.1.2, py-1.4.34, pluggy-0.4.0 -- /home/vincent/test_api/env/bin/python
+cachedir: .cache
+rootdir: /home/vincent/test_api, inifile:
+collected 30 items 
+
+test/test_api.py::test_create[chars-abc-0] PASSED
+
+============================= 1 passed in 4.06 seconds ==============================
+
+```
+
+## Run specific testcase set
+
+```
+(env)vincent@vincent-home:~/test_api$ pytest --verbose test/test_api.py::test_create_with_name_length
+================================ test session starts ================================
+platform linux2 -- Python 2.7.6, pytest-3.1.2, py-1.4.34, pluggy-0.4.0 -- /home/vincent/test_api/env/bin/python
+cachedir: .cache
+rootdir: /home/vincent/test_api, inifile:
+collected 31 items 
+
+test/test_api.py::test_create_with_name_length[254-254-0] PASSED
+test/test_api.py::test_create_with_name_length[255-255-606] PASSED
+
+============================= 2 passed in 5.78 seconds ==============================
 ```
